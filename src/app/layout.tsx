@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Prompt to Video',
+  title: 'Video Generator',
   description: 'Generate videos from text prompts using Replicate AI',
 };
 
