@@ -9,7 +9,7 @@ export default function Home() {
             Video Generator
           </h1>
           <p className="text-xl text-gray-700 dark:text-gray-200 max-w-2xl mx-auto leading-relaxed">
-            Transform your ideas into stunning videos using Replicate AI. Simply describe what you want to see, and our AI will
+            Transform your ideas into stunning videos using Replicate AI. Simply describe what you want to see, and AI will
             create it for you with vibrant colors and amazing effects!
           </p>
         </div>
