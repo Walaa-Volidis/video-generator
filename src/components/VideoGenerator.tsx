@@ -15,16 +15,41 @@ import { useVideoGenerator } from '@/app/hooks/use-video-generator';
 
 const VideoGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
   const { generateVideo, loading, videoUrl } = useVideoGenerator();
 
-  const handleDownload = () => {
-    if (videoUrl) {
+  const handleDownload = async () => {
+    if (!videoUrl) return;
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(videoUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch video');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = videoUrl;
-      link.download = 'generated-video.mp4';
+      link.href = url;
+      link.download = `ai-video-${Date.now()}.mp4`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      const link = document.createElement('a');
+      link.href = videoUrl;
+      link.download = `ai-video-${Date.now()}.mp4`;
+      link.target = '_blank';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -80,17 +105,27 @@ const VideoGenerator: React.FC = () => {
       {/* Video Display Section */}
       {videoUrl && (
         <Card className="border-2 border-green-200 dark:border-green-700 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 text-white rounded-t-lg">
+          <CardHeader className="bg-gradient-to-r text-purple-700 dark:text-purple-300 rounded-t-lg">
             <CardTitle className="flex items-center justify-between text-2xl">
               Generated Video
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleDownload}
-                className="flex items-center gap-2 bg-white/20 border-white/30 text-white hover:bg-white/30 text-base"
+                disabled={isDownloading}
+                className="flex items-center gap-2 bg-white/20 border-white/30 text-purple-700 dark:text-purple-300 hover:bg-white/30 text-base disabled:opacity-50"
               >
-                <Download className="w-5 h-5" />
-                Download
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    Download
+                  </>
+                )}
               </Button>
             </CardTitle>
           </CardHeader>
