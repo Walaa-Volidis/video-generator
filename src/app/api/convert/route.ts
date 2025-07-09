@@ -19,16 +19,30 @@ async function streamToBuffer(
   stream: ReadableStream<Uint8Array>
 ): Promise<Buffer> {
   const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
+  const chunkPromises: Promise<{ index: number; data: Uint8Array }>[] = [];
 
   let done = false;
+  let chunkIndex = 0;
+
   while (!done) {
     const { value, done: readerDone } = await reader.read();
-    if (value) chunks.push(value);
+    if (value) {
+      const currentIndex = chunkIndex++;
+      const chunkPromise = Promise.resolve().then(async () => {
+        await new Promise((resolve) => setImmediate(resolve));
+        return { index: currentIndex, data: value };
+      });
+      chunkPromises.push(chunkPromise);
+    }
     done = readerDone;
   }
 
-  return Buffer.concat(chunks);
+  const processedChunks = await Promise.all(chunkPromises);
+  const sortedChunks = processedChunks
+    .sort((a, b) => a.index - b.index)
+    .map((chunk) => chunk.data);
+
+  return Buffer.concat(sortedChunks);
 }
 
 type ReplicateVideoOutput = string | string[] | ReadableStream;
