@@ -15,35 +15,7 @@ const replicate = new Replicate({
   auth: SERVER_SETTINGS.replicateApiToken,
 });
 
-async function streamToBuffer(
-  stream: ReadableStream<Uint8Array>
-): Promise<Buffer> {
-  const reader = stream.getReader();
-  const chunkPromises: Promise<{ index: number; data: Uint8Array }>[] = [];
 
-  let done = false;
-  let chunkIndex = 0;
-
-  while (!done) {
-    const { value, done: readerDone } = await reader.read();
-    if (value) {
-      const currentIndex = chunkIndex++;
-      const chunkPromise = Promise.resolve().then(async () => {
-        await new Promise((resolve) => setImmediate(resolve));
-        return { index: currentIndex, data: value };
-      });
-      chunkPromises.push(chunkPromise);
-    }
-    done = readerDone;
-  }
-
-  const processedChunks = await Promise.all(chunkPromises);
-  const sortedChunks = processedChunks
-    .sort((a, b) => a.index - b.index)
-    .map((chunk) => chunk.data);
-
-  return Buffer.concat(sortedChunks);
-}
 
 type ReplicateVideoOutput = string | string[] | ReadableStream;
 
@@ -72,29 +44,9 @@ export async function POST(request: NextRequest) {
   let videoUrl: string = '';
 
   try {
-    let buffer: Buffer;
-
-    if (output instanceof ReadableStream) {
-      buffer = await streamToBuffer(output);
-    } else if (Array.isArray(output) && output.length > 0) {
-      const videoResponse = await fetch(output[0]);
-      if (!videoResponse.ok) {
-        throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
-      }
-      const videoStream = videoResponse.body as ReadableStream;
-      buffer = await streamToBuffer(videoStream);
-    } else if (typeof output === 'string') {
-      const videoResponse = await fetch(output);
-      if (!videoResponse.ok) {
-        throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
-      }
-      const videoStream = videoResponse.body as ReadableStream;
-      buffer = await streamToBuffer(videoStream);
-    } else {
-      return NextResponse.json({
-        error: 'Invalid output format from Replicate API',
-      });
-    }
+    const response = new Response(output as ReadableStream);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer: Buffer = Buffer.from(arrayBuffer);
 
     const videoName = `${crypto.randomUUID()}.mp4`;
 
