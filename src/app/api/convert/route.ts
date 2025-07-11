@@ -3,6 +3,8 @@ import Replicate from 'replicate';
 import { SERVER_SETTINGS } from '../../../settings';
 import { uploadToS3 } from '@/lib/uploadToS3';
 import { z } from 'zod';
+import type { ReadableStream as WebReadableStream } from 'node:stream/web'; // Import WebReadableStream type
+
 const ZRequestSchema = z.object({
   prompt: z.string(),
 });
@@ -44,13 +46,9 @@ export async function POST(request: NextRequest) {
   let videoUrl: string = '';
 
   try {
-    const response = new Response(output as ReadableStream);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer: Buffer = Buffer.from(arrayBuffer);
-
     const videoName = `${crypto.randomUUID()}.mp4`;
 
-    videoUrl = await uploadToS3(buffer, videoName);
+    videoUrl = await uploadToS3(output as WebReadableStream, videoName);
     ZResponseSchema.parse({ videoUrl });
   } catch (error) {
     console.error('Error processing/uploading video:', error);
