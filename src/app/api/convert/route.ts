@@ -3,7 +3,7 @@ import Replicate from 'replicate';
 import { SERVER_SETTINGS } from '../../../settings';
 import { uploadToS3 } from '@/lib/uploadToS3';
 import { z } from 'zod';
-import type { ReadableStream as WebReadableStream } from 'node:stream/web'; // Import WebReadableStream type
+import type { ReadableStream as WebReadableStream } from 'node:stream/web'; 
 
 const ZRequestSchema = z.object({
   prompt: z.string(),
