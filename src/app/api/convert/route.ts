@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
     })) as ReplicateVideoOutput;
   } catch (error) {
     console.error('Error:', error);
-    return NextResponse.json({ error: 'Failed to generate video' });
+    return NextResponse.json(
+      { error: 'Failed to generate video!' },
+      { status: 500 }
+    );
   }
   let videoUrl: string = '';
   try {
@@ -43,9 +46,12 @@ export async function POST(request: NextRequest) {
     ZResponseSchema.parse({ videoUrl });
   } catch (error) {
     console.error('Error processing/uploading video:', error);
-    return NextResponse.json({
-      error: 'Failed to process and upload video to S3',
-    });
+    return NextResponse.json(
+      {
+        error: 'Failed to process and upload video to S3',
+      },
+      { status: 500 }
+    );
   }
   return NextResponse.json({
     message: 'Video generated and uploaded successfully',
