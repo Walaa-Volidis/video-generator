@@ -10,13 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Play, Download } from 'lucide-react';
+import { Loader2, Play, Download, AlertCircle } from 'lucide-react';
 import { useVideoGenerator } from '@/app/hooks/use-video-generator';
+import toast from 'react-hot-toast';
 
 const VideoGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const { generateVideo, loading, videoUrl } = useVideoGenerator();
+  const { generateVideo, loading, videoUrl, error } = useVideoGenerator();
 
   const handleDownload = async () => {
     if (!videoUrl) return;
@@ -38,8 +39,10 @@ const VideoGenerator: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      toast.success('Video downloaded successfully!');
     } catch (error) {
       console.error('Download failed:', error);
+      toast.error('Download failed. Opening video in new tab...');
       const link = document.createElement('a');
       link.href = videoUrl;
       link.download = `ai-video-${Date.now()}.mp4`;
@@ -163,6 +166,33 @@ const VideoGenerator: React.FC = () => {
                 <p className="text-lg text-orange-600 dark:text-orange-400">
                   This may take a few minutes
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && !loading && (
+        <Card className="border-2 border-red-200 dark:border-red-700 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center space-y-4">
+              <div className="relative">
+                <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
+              </div>
+              <div>
+                <p className="text-xl font-medium text-red-600 dark:text-red-400">
+                  Generation Failed
+                </p>
+                <p className="text-lg text-red-500 dark:text-red-300">
+                  {error}
+                </p>
+                <Button
+                  onClick={() => generateVideo(prompt)}
+                  disabled={!prompt.trim()}
+                  className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Try Again
+                </Button>
               </div>
             </div>
           </CardContent>
